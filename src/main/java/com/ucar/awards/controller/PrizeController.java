@@ -3,6 +3,7 @@ package com.ucar.awards.controller;
 import com.ucar.awards.AwardsConst;
 import com.ucar.awards.msg.PostRetEnum;
 import com.ucar.awards.service.JedisService;
+import com.ucar.awards.service.QueueService;
 import com.ucar.awards.vo.RestFulVO;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -29,6 +30,9 @@ public class PrizeController {
     @Autowired
     private JedisService jedisService;
 
+    @Autowired
+    private QueueService queueService;
+
     /**
      * 添加奖品
      *
@@ -47,8 +51,9 @@ public class PrizeController {
         if (codeNumbers % 10 == 0) {
             boolean flag = jedisService.hexists(AwardsConst.PRIZE + pid, AwardsConst.PID);
             if (!flag) {
-                jedisService.addPrize(pid, pname,codeNumber);
-                jedisService.prizeCodes(pid,codeNumbers);
+                queueService.initQueue(codeNumbers);
+                jedisService.addPrize(pid, pname, codeNumber);
+                jedisService.prizeCodes(pid, codeNumbers);
                 jedisService.set(AwardsConst.JOIN_PRIZE_COUNT + pid, "0");
                 LOGGER.info("奖品添加成功......." + pid + "    " + pname);
                 return new RestFulVO(PostRetEnum.SUCCESS);

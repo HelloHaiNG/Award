@@ -20,6 +20,8 @@ public enum PostRetEnum {
 
     COINS_LESS("1004","夺宝币不足"),
 
+    PRIZE_FULL("1005","参与抽奖人数已满"),
+
     ERROR("1111", "操作失败");
 
     private String code;
