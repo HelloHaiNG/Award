@@ -212,6 +212,14 @@ public class JedisService {
         jedis.incr(key);
     }
 
+    /**
+     * 删除
+     * @param key
+     */
+    public void delete(String key) {
+        jedis.del(key);
+    }
+
     public static void main(String[] args) {
         JedisService service = new JedisService();
         service.addUser();

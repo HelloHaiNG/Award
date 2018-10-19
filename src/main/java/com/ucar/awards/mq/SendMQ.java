@@ -30,8 +30,8 @@ public class SendMQ {
         rabbitTemplate.convertAndSend(AwardsConst.EXCHANGE, AwardsConst.QUEUE1, message);
     }
 
-    public void sendMsgPrize(String pid) {
-        LOGGER.info("发送的mq消息是:  奖品立即开奖:" + pid);
+    public void sendMsgUserPrizeCodes(String pid) {
+        LOGGER.info("发送的mq消息是:  抽奖人数已达上限，开始分配给用户奖品码：" + pid);
         rabbitTemplate.convertAndSend(AwardsConst.EXCHANGE, AwardsConst.QUEUE2, pid);
     }
 }

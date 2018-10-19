@@ -53,6 +53,7 @@ public class UserController {
         boolean isExistUser = jedisService.hexists(AwardsConst.USER + userId, AwardsConst.USERID);
         boolean isExistPrize = jedisService.hexists(AwardsConst.PRIZE + pid, AwardsConst.PID);
         if (isExistPrize && isExistUser) {
+            //夺宝币的判断
             List<String> listUserCoins = jedisService.hmget(AwardsConst.USERID_COINS, userId);
             String personCoins = listUserCoins.get(0);
             Long intCoins = Long.valueOf(coins);
@@ -68,10 +69,16 @@ public class UserController {
                 intCoins = maxCoins;
             }
 
+            //入队
             String queueData = userId + "_" + String.valueOf(intCoins) + "_" + pid;
             boolean isFull = queueService.pushQueue(queueData);
             if (!isFull) {
-                jedisService.setnx(pid, pid);
+                String queuePrize = jedisService.get(AwardsConst.QUEUE_PRIZE + pid);
+                if (queuePrize != null) {
+                    jedisService.delete(AwardsConst.QUEUE_PRIZE + pid);
+                    LOGGER.info("抽奖人数已达上限，开始分配给用户奖品码...........");
+                    mq.sendMsgUserPrizeCodes(pid);
+                }
                 return new RestFulVO(PostRetEnum.PRIZE_FULL);
             }
         } else {

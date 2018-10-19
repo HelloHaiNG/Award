@@ -3,6 +3,7 @@ package com.ucar.awards.mq;
 import com.ucar.awards.AwardsConst;
 import com.ucar.awards.service.JedisService;
 import com.ucar.awards.service.PrizeService;
+import com.ucar.awards.service.QueueService;
 import com.ucar.awards.service.UserService;
 import com.ucar.awards.utils.DateUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -34,22 +35,36 @@ public class ReciveMQ {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private QueueService queueService;
+
     @RabbitListener(queues = AwardsConst.QUEUE1)
     public void receviceLogin(String message) {
         LOGGER.info("登陆成功收到消息：" + message);
-        String userId = StringUtils.substringBefore(message,"_");
-        String localDate = StringUtils.substringAfter(message,"_");
-        userService.updateUser(userId,localDate);
+        String userId = StringUtils.substringBefore(message, "_");
+        String localDate = StringUtils.substringAfter(message, "_");
+        userService.updateUser(userId, localDate);
     }
 
     @RabbitListener(queues = AwardsConst.QUEUE2)
-    public void recevicePrize(String message) {
+    public void receviceUserPrizeCode(String message) {
         LOGGER.info("开奖收到的消息是：   " + message);
+        List<String> list = queueService.popQueue();
+        if (list != null && list.size() > 0) {
+            for (String string : list) {
+                String userId = StringUtils.substringBefore(string, "_");
+                String coins = StringUtils.substringBetween(string, "_", "_");
+                boolean flag = prizeService.prizeAndUserAndCodes(message, userId, coins);
+                if (!flag) {
+                    break;
+                }
+            }
+            //生成幸运码
+            String luckyCode = prizeService.luckyCode(message);
 
-        //幸运码生成
-        String luckyCode = prizeService.luckyCode(message);
-
-        //得出幸运用户
-        userService.luckyUser(luckyCode, message);
+            //幸运用户
+            userService.luckyUser(luckyCode,message);
+        }
     }
+
 }

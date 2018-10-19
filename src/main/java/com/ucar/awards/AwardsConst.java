@@ -17,6 +17,7 @@ public final class AwardsConst {
     public final static String PNAME = "pname";
     public final static String CODE_NUMBER = "codeNumber";
     public final static String PRIZE_CODES = "prize_codes:";  //奖品夺宝码的生成
+    public final static String QUEUE_PRIZE = "queue_prize:";  //奖品夺宝码的生成
     public final static String PRIZE_CODES_TEMP = "prize_codes_temp:";   //临时奖品夺宝码生成
     public final static Integer MAX_COINS_CODES = 3;    //一个人最多夺宝次数概率
     public final static String USER_PRIZE = "user_prize:";  //人分配的夺宝码

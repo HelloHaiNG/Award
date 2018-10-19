@@ -51,7 +51,9 @@ public class PrizeController {
         if (codeNumbers % 10 == 0) {
             boolean flag = jedisService.hexists(AwardsConst.PRIZE + pid, AwardsConst.PID);
             if (!flag) {
+                //初始化队列长度
                 queueService.initQueue(codeNumbers);
+                jedisService.setnx(AwardsConst.QUEUE_PRIZE + pid, pid);
                 jedisService.addPrize(pid, pname, codeNumber);
                 jedisService.prizeCodes(pid, codeNumbers);
                 jedisService.set(AwardsConst.JOIN_PRIZE_COUNT + pid, "0");
