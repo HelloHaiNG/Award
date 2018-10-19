@@ -97,16 +97,16 @@ public class JedisService {
 
     public void addUser() {
         HashMap<String, String> hashMap = new HashMap<>();
-        hashMap.put(AwardsConst.USERID, "4");
+        hashMap.put(AwardsConst.USERID, "12");
         hashMap.put(AwardsConst.REGISTERDATE, "2017-10-01");
         hashMap.put(AwardsConst.LASTLOGINDATE, "2018-10-09");
         hashMap.put(AwardsConst.CONTINUEDAY, "5");
-        jedis.hmset(AwardsConst.USER + "4", hashMap);
+        jedis.hmset(AwardsConst.USER + "12", hashMap);
     }
 
     public void addCoins() {
         HashMap<String, String> hashMap = new HashMap<>();
-        hashMap.put("4", "10");
+        hashMap.put("12", "10");
         jedis.hmset(AwardsConst.USERID_COINS, hashMap);
     }
 

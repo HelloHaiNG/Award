@@ -3,6 +3,7 @@ package com.ucar.awards.service;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -21,8 +22,8 @@ public class QueueService {
      *
      * @param length
      */
-    public void initQueue(Integer length) {
-        queue = new LinkedBlockingQueue<>(length);
+    public LinkedBlockingQueue initQueue(Integer length) {
+        return queue = new LinkedBlockingQueue<>(length);
     }
 
     /**
@@ -31,8 +32,8 @@ public class QueueService {
      * @param data
      * @return
      */
-    public boolean pushQueue(String data) {
-        return queue.offer(data);
+    public boolean pushQueue(String data, LinkedBlockingQueue queue1) {
+        return queue1.offer(data);
     }
 
     /**
@@ -40,10 +41,11 @@ public class QueueService {
      *
      * @return
      */
-    public List<String> popQueue() {
+    public List<String> popQueue(LinkedBlockingQueue queue1) {
+        int size = queue1.size();
         List<String> list = new ArrayList<>();
-        for (int i = 0; i < queue.size(); i++) {
-            list.add(queue.poll());
+        for (int i = 0; i < size; i++) {
+            list.add((String) queue1.poll());
         }
         return list;
     }

@@ -14,13 +14,15 @@ public enum PostRetEnum {
 
     LOGIN_ERROR("1001", "登陆失败"),
 
-    ADD_PRIZE_ERROR("1002","添加奖品信息失败"),
+    ADD_PRIZE_ERROR("1002", "添加奖品信息失败"),
 
-    JOIN_PRIZE_ERROR("1003","参与抽奖失败"),
+    JOIN_PRIZE_ERROR("1003", "参与抽奖失败"),
 
-    COINS_LESS("1004","夺宝币不足"),
+    COINS_LESS("1004", "夺宝币不足"),
 
-    PRIZE_FULL("1005","参与抽奖人数已满"),
+    PRIZE_FULL("1005", "参与抽奖人数已满"),
+
+    PRIZE_END("1006", "抽奖结束"),
 
     ERROR("1111", "操作失败");
 

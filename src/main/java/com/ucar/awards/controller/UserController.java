@@ -3,6 +3,7 @@ package com.ucar.awards.controller;
 import com.ucar.awards.AwardsConst;
 import com.ucar.awards.mq.SendMQ;
 import com.ucar.awards.msg.PostRetEnum;
+import com.ucar.awards.service.ConcurrentHashMapService;
 import com.ucar.awards.service.JedisService;
 import com.ucar.awards.service.QueueService;
 import com.ucar.awards.vo.RestFulVO;
@@ -12,8 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author liaohong
@@ -36,6 +37,9 @@ public class UserController {
     @Autowired
     private QueueService queueService;
 
+    @Autowired
+    private ConcurrentHashMapService hashMapService;
+
     /**
      * 参与抽奖
      *
@@ -53,38 +57,45 @@ public class UserController {
         boolean isExistUser = jedisService.hexists(AwardsConst.USER + userId, AwardsConst.USERID);
         boolean isExistPrize = jedisService.hexists(AwardsConst.PRIZE + pid, AwardsConst.PID);
         if (isExistPrize && isExistUser) {
-            //夺宝币的判断
-            List<String> listUserCoins = jedisService.hmget(AwardsConst.USERID_COINS, userId);
-            String personCoins = listUserCoins.get(0);
-            Long intCoins = Long.valueOf(coins);
-            if (intCoins > Integer.valueOf(personCoins)) {
-                LOGGER.error("夺宝币不足");
-                return new RestFulVO(PostRetEnum.COINS_LESS);
-            }
-
-            //个人可选择的最多抽奖机会
-            Long coinCounts = jedisService.llen(AwardsConst.PRIZE_CODES + pid);
-            Long maxCoins = coinCounts * AwardsConst.MAX_COINS_CODES / 10;
-            if (intCoins > maxCoins) {
-                intCoins = maxCoins;
-            }
-
-            //入队
-            String queueData = userId + "_" + String.valueOf(intCoins) + "_" + pid;
-            boolean isFull = queueService.pushQueue(queueData);
-            if (!isFull) {
-                String queuePrize = jedisService.get(AwardsConst.QUEUE_PRIZE + pid);
-                if (queuePrize != null) {
-                    jedisService.delete(AwardsConst.QUEUE_PRIZE + pid);
-                    LOGGER.info("抽奖人数已达上限，开始分配给用户奖品码...........");
-                    mq.sendMsgUserPrizeCodes(pid);
+            LinkedBlockingQueue queue = hashMapService.get(pid);
+            if (queue != null) {
+                //夺宝币的判断
+                List<String> listUserCoins = jedisService.hmget(AwardsConst.USERID_COINS, userId);
+                String personCoins = listUserCoins.get(0);
+                Long intCoins = Long.valueOf(coins);
+                if (intCoins > Integer.valueOf(personCoins)) {
+                    LOGGER.error("夺宝币不足");
+                    return new RestFulVO(PostRetEnum.COINS_LESS);
                 }
-                return new RestFulVO(PostRetEnum.PRIZE_FULL);
+
+                //个人可选择的最多抽奖机会
+                Long coinCounts = jedisService.llen(AwardsConst.PRIZE_CODES + pid);
+                Long maxCoins = coinCounts * AwardsConst.MAX_COINS_CODES / 10;
+                if (intCoins > maxCoins) {
+                    intCoins = maxCoins;
+                }
+
+                //入队
+                String queueData = userId + "_" + String.valueOf(intCoins) + "_" + pid;
+                boolean isFull = queueService.pushQueue(queueData, queue);
+                if (!isFull) {
+                    String queuePrize = jedisService.get(AwardsConst.QUEUE_PRIZE + pid);
+                    if (queuePrize != null) {
+                        jedisService.delete(AwardsConst.QUEUE_PRIZE + pid);
+                        LOGGER.info("该抽奖人数已达上限，开始分配给用户奖品码...........");
+                        mq.sendMsgUserPrizeCodes(pid);
+                    }
+                    return new RestFulVO(PostRetEnum.PRIZE_FULL);
+                }
+            } else {
+                LOGGER.error("该奖品已经抽奖已经结束...." + pid);
+                return new RestFulVO(PostRetEnum.PRIZE_END);
             }
         } else {
-            LOGGER.error("用户或者奖品信息不存在");
+            LOGGER.error("用户或者奖品信息redis中不存在");
             return new RestFulVO(PostRetEnum.JOIN_PRIZE_ERROR);
         }
+        LOGGER.info("用户参与抽奖成功，等待开奖........." + userId);
         return new RestFulVO(PostRetEnum.SUCCESS);
     }
 }

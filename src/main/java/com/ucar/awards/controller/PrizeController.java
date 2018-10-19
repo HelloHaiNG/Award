@@ -2,6 +2,7 @@ package com.ucar.awards.controller;
 
 import com.ucar.awards.AwardsConst;
 import com.ucar.awards.msg.PostRetEnum;
+import com.ucar.awards.service.ConcurrentHashMapService;
 import com.ucar.awards.service.JedisService;
 import com.ucar.awards.service.QueueService;
 import com.ucar.awards.vo.RestFulVO;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author liaohong
@@ -32,6 +33,9 @@ public class PrizeController {
 
     @Autowired
     private QueueService queueService;
+
+    @Autowired
+    private ConcurrentHashMapService hashMapService;
 
     /**
      * 添加奖品
@@ -52,7 +56,8 @@ public class PrizeController {
             boolean flag = jedisService.hexists(AwardsConst.PRIZE + pid, AwardsConst.PID);
             if (!flag) {
                 //初始化队列长度
-                queueService.initQueue(codeNumbers);
+                LinkedBlockingQueue queue = queueService.initQueue(codeNumbers);
+                hashMapService.put(pid,queue);
                 jedisService.setnx(AwardsConst.QUEUE_PRIZE + pid, pid);
                 jedisService.addPrize(pid, pname, codeNumber);
                 jedisService.prizeCodes(pid, codeNumbers);
